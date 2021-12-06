@@ -48,15 +48,17 @@ public class TestGrid : MonoBehaviour
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out RaycastHit hit, float.MaxValue, layer))
             {
-                grid.WorldPositionToCoordinates(hit.point, out int x, out int y);
-                Vector3 pos = grid.CoordinatesToWorldPosition(x, y);
+                grid.WorldToCoor(hit.point, out int x, out int y);
+                Vector3 pos = grid.CoorToWorld(x, y);
+                pos -= bg.offset;
 
                 //check on boundaries
                 available = true;
-                if ((pos.x < (grid.CoordinatesToWorldPosition(0, 0).x)) || pos.x > (width - bg.width) * grid.cellSize)
+                Vector3 startPos = grid.CoorToWorld(0, 0);
+                Vector3 endtPos = grid.CoorToWorld((width - bg.width), (height - bg.height));
+                if (pos.x < startPos.x || pos.x > endtPos.x || pos.z < startPos.z || pos.z > endtPos.z)
                     available = false;
-                if ((pos.z < (grid.CoordinatesToWorldPosition(0, 0).z)) || pos.z > (height - bg.height) * grid.cellSize)
-                    available = false;
+
 
                 //check on overlap
                 //leftmost bottom coordinate
@@ -88,6 +90,7 @@ public class TestGrid : MonoBehaviour
         for (int i = x; i < x + bg.width; i++)
             for (int q = y; q < y + bg.height; q++)
                 grid.SetValue(9, i, q);
+        grid.DrawVisuals();
         bg.SetBuildColor();
         flyingBuilding = null;
     }

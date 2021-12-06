@@ -5,66 +5,70 @@ using UnityEngine;
 
 public class Grid
 {
-    public const int HEAT_MAP_MAX_VALUE = 100;
-    public const int HEAT_MAP_MIN_VALUE = 0;
+    private readonly bool XY;
 
-    public float cellSize { get; private set; }
+    private float cellSize;
     private float cellRadius;
-    public int width { get; private set; }
-    public int height { get; private set; }
+    private int width;
+    private int height;
     public Vector3 originPosition { get; private set; }
 
     private int[,] gridArray;
+    private TextMesh[,] debugArray;
 
-    public Grid(int _width, int _height, float _cellSize, Vector3 _originPosition)
+    public Grid(int _width, int _height, float _cellSize, Vector3 _originPosition, bool _XY = false)
     {
         width = _width;
         height = _height;
         cellSize = _cellSize;
         cellRadius = cellSize / 2;
         originPosition = _originPosition;
-
         gridArray = new int[width, height];
-
-        DrawVisuals();
+        debugArray = new TextMesh[width, height];
+        XY = _XY;
     }
-
 
     public void DrawVisuals(Transform parent = null)
     {
         for (int x = 0; x < width; x++)
             for (int y = 0; y < height; y++)
             {
-                Debug.Log("Draw visuals");
-                Debug.DrawLine(CoordinatesToWorldPosition(x, y), CoordinatesToWorldPosition(x, y + 1), Color.white, 100);
-                Debug.DrawLine(CoordinatesToWorldPosition(x, y), CoordinatesToWorldPosition(x + 1, y), Color.white, 100);
-                CreateText(gridArray[x, y].ToString(), parent, CoordinatesToWorldPosition(x, y), 7, Color.white, TextAnchor.MiddleCenter, TextAlignment.Center);
-                //Handles.Label(CoordinatesToWorldPosition(x, y), "0");
+                Debug.DrawLine(CoorToWorld(x, y), CoorToWorld(x, y + 1), Color.white, 100);
+                Debug.DrawLine(CoorToWorld(x, y), CoorToWorld(x + 1, y), Color.white, 100);
+
+                if (debugArray[x, y] == null)
+                    debugArray[x, y] = CreateText(gridArray[x, y].ToString(), parent, CoorToWorld(x, y), 7, Color.white, TextAnchor.MiddleCenter, TextAlignment.Center);
+                else
+                    debugArray[x, y].text = gridArray[x, y].ToString();
             }
-        Debug.DrawLine(CoordinatesToWorldPosition(0, height), CoordinatesToWorldPosition(width, height), Color.white, 100);
-        Debug.DrawLine(CoordinatesToWorldPosition(width, 0), CoordinatesToWorldPosition(width, height), Color.white, 100);
+
+        Debug.DrawLine(CoorToWorld(0, height), CoorToWorld(width, height), Color.white, 100);
+        Debug.DrawLine(CoorToWorld(width, 0), CoorToWorld(width, height), Color.white, 100);
     }
 
     private TextMesh CreateText(string text, Transform parent, Vector3 localPosition, int fontSize, Color color, TextAnchor textAnchor, TextAlignment textAlignment)
     {
         GameObject gameObject = new GameObject("Debug_Text", typeof(TextMesh));
+
         Transform transform = gameObject.transform;
         transform.SetParent(parent, false);
         transform.localPosition = new Vector3(localPosition.x + cellRadius, localPosition.y, localPosition.z + cellRadius);
         transform.rotation = Quaternion.Euler(90, 0, 0);
+
         TextMesh textMesh = gameObject.GetComponent<TextMesh>();
         textMesh.anchor = textAnchor;
         textMesh.alignment = textAlignment;
         textMesh.text = text;
         textMesh.fontSize = fontSize;
         textMesh.color = color;
+
         return textMesh;
     }
 
     public void SetValue(int value, int x, int y)
     {
         if (x >= 0 && x < width && y >= 0 && y < height)
-            gridArray[x, y] = Mathf.Clamp(value, HEAT_MAP_MIN_VALUE, HEAT_MAP_MAX_VALUE);
+            gridArray[x, y] = value;
     }
 
     public void SetValue(int value, Vector2Int coordinates)
@@ -75,7 +79,7 @@ public class Grid
     public void SetValue(int value, Vector3 worldPosition)
     {
         int x, y;
-        WorldPositionToCoordinates(worldPosition, out x, out y);
+        WorldToCoor(worldPosition, out x, out y);
         SetValue(value, x, y);
     }
 
@@ -89,24 +93,50 @@ public class Grid
     public int GetValue(Vector3 position)
     {
         int x, y;
-        WorldPositionToCoordinates(position, out x, out y);
+        WorldToCoor(position, out x, out y);
         return GetValue(x, y);
     }
 
 
-    public void WorldPositionToCoordinates(Vector3 worldPostion, out int x, out int y)
+    public void WorldToCoor(Vector3 worldPostion, out int x, out int y)
+    {
+        if (XY)
+            WorldToCoorXY(worldPostion, out x, out y);
+        else
+            WorldToCoorXZ(worldPostion, out x, out y);
+    }
+
+    private void WorldToCoorXY(Vector3 worldPostion, out int x, out int y)
+    {
+        x = Mathf.FloorToInt((worldPostion - originPosition).x / cellSize);
+        y = Mathf.FloorToInt((worldPostion - originPosition).y / cellSize);
+    }
+
+    private void WorldToCoorXZ(Vector3 worldPostion, out int x, out int y)
     {
         x = Mathf.FloorToInt((worldPostion - originPosition).x / cellSize);
         y = Mathf.FloorToInt((worldPostion - originPosition).z / cellSize);
     }
 
-    public Vector3 CoordinatesToWorldPosition(int x, int y)
+    public Vector3 CoorToWorld(int x, int y)
+    {
+        if (XY)
+            return CoorToWorldXY(x, y);
+        else
+            return CoorToWorldXZ(x, y);
+    }
+    private Vector3 CoorToWorldXY(int x, int y)
+    {
+        return new Vector3(x, y, 0) * cellSize + originPosition;
+    }
+
+    private Vector3 CoorToWorldXZ(int x, int y)
     {
         return new Vector3(x, 0, y) * cellSize + originPosition;
     }
 
-    public Vector3 CoordinatesToWorldPosition(Vector2Int coordinates)
+    public Vector3 CoorToWorld(Vector2Int coordinates)
     {
-        return CoordinatesToWorldPosition(coordinates.x, coordinates.y);
+        return CoorToWorld(coordinates.x, coordinates.y);
     }
 }

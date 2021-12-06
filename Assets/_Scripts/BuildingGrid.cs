@@ -10,24 +10,6 @@ public class BuildingGrid : MonoBehaviour
     [SerializeField] private Renderer render;
     public Vector3 offset { get; private set; }
 
-    private void Awake()
-    {
-        SetBuildColor();
-    }
-
-    //void Start()
-    //{
-    //    //grid = gridT.GetComponent<TestGrid>().grid;
-    //    //float sellSize = gridT.GetComponent<TestGrid>().cellSize;
-    //    BoxCollider colider = gameObject.GetComponentInChildren<BoxCollider>();
-
-    //    width = (int)((colider.bounds.max.x - colider.bounds.min.x) / sellSize) + 1;
-    //    height = (int)((colider.bounds.max.z - colider.bounds.min.z) / sellSize) + 1;
-
-    //    offset = new Vector3(width * sellSize / 2, 0, height * sellSize / 2);
-    //    Debug.Log($"{offset}");
-
-    //}
     public void SetUp(float sellSize)
     {
         BoxCollider colider = gameObject.GetComponentInChildren<BoxCollider>();
@@ -36,7 +18,6 @@ public class BuildingGrid : MonoBehaviour
         height = (int)((colider.bounds.max.z - colider.bounds.min.z) / sellSize) + 1;
 
         offset = new Vector3(width * sellSize / 2, 0, height * sellSize / 2);
-        Debug.Log($"offset {offset}");
     }
 
 
